@@ -1,0 +1,2855 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    -
+      uuid: 040d20d408f447c4a041176b8604e5e9
+      name: 'Templates/RAID controllers'
+  host_groups:
+    -
+      uuid: a233ff79ffb0428c9c6f42b4c5656124
+      name: 'Type: LSI monitored ESXi hosts'
+  templates:
+    -
+      uuid: 0b9ff6a2756b46daa10fccb0a3738983
+      template: 'Template LSI JSON LLD ESXI'
+      name: 'Template LSI JSON LLD ESXI'
+      groups:
+        -
+          name: 'Templates/RAID controllers'
+      items:
+        -
+          uuid: 0eeba0858e564010911102b2e930b963
+          name: 'BBUs info'
+          key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_bbuinfo]'
+          delay: '{$REQUEST_PERIOD}'
+          history: '{$INTERNAL_ITEMS_HISTORY_PERIOD}'
+          trends: '0'
+          value_type: TEXT
+          tags:
+            -
+              tag: Application
+              value: 'LSI Internal items'
+        -
+          uuid: 9cff4a6450234131a8df77a5888cfb34
+          name: 'Controllers info'
+          key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ctlinfo]'
+          delay: '{$REQUEST_PERIOD}'
+          history: '{$INTERNAL_ITEMS_HISTORY_PERIOD}'
+          trends: '0'
+          value_type: TEXT
+          tags:
+            -
+              tag: Application
+              value: 'LSI Internal items'
+        -
+          uuid: d6210abec11a4eaf9833d05548c6bd0b
+          name: 'CVs info'
+          key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_cvinfo]'
+          delay: '{$REQUEST_PERIOD}'
+          history: '{$INTERNAL_ITEMS_HISTORY_PERIOD}'
+          trends: '0'
+          value_type: TEXT
+          tags:
+            -
+              tag: Application
+              value: 'LSI Internal items'
+        -
+          uuid: 0da01b0bd7a249a18cab9ea30ba4d75f
+          name: 'Logical disks info'
+          key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+          delay: '{$REQUEST_PERIOD}'
+          history: '{$INTERNAL_ITEMS_HISTORY_PERIOD}'
+          trends: '0'
+          value_type: TEXT
+          tags:
+            -
+              tag: Application
+              value: 'LSI Internal items'
+        -
+          uuid: 5551f035ed4e44b6b1158ee85435d4fe
+          name: 'Physical disks NE info'
+          key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+          delay: '{$REQUEST_PERIOD}'
+          history: '{$INTERNAL_ITEMS_HISTORY_PERIOD}'
+          trends: '0'
+          value_type: TEXT
+          description: |
+            NE=No Enclosure
+            Disks without Enclosure or Backplane
+          tags:
+            -
+              tag: Application
+              value: 'LSI Internal items'
+        -
+          uuid: 4881c963364844daa9cb991cefc39710
+          name: 'Physical disks info'
+          key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+          delay: '{$REQUEST_PERIOD}'
+          history: '{$INTERNAL_ITEMS_HISTORY_PERIOD}'
+          trends: '0'
+          value_type: TEXT
+          tags:
+            -
+              tag: Application
+              value: 'LSI Internal items'
+        -
+          uuid: 6bf63b94f750482abf1bbfe3323bc222
+          name: 'Check file modification time'
+          key: 'vfs.file.time[/tmp/raidstatus_{$ESXIHOST}_ctlinfo]'
+          delay: '{$REQUEST_PERIOD}'
+          history: '{$INTERNAL_ITEMS_HISTORY_PERIOD}'
+          trends: '0'
+          tags:
+            -
+              tag: Application
+              value: 'LSI Internal items'
+          triggers:
+            -
+              uuid: 5bde50bad3934995a2bc9610bed6a4fa
+              expression: '(changecount(/Template LSI JSON LLD ESXI/vfs.file.time[/tmp/raidstatus_{$ESXIHOST}_ctlinfo],#3)=0) and (last(/Template LSI JSON LLD ESXI/vfs.file.time[/tmp/raidstatus_{$ESXIHOST}_ctlinfo],#3)>0)'
+              name: 'No StorCLI data from {$ESXIHOST}'
+              priority: AVERAGE
+      discovery_rules:
+        -
+          uuid: 4df114df88b04b18b9c90ef8fe6149da
+          name: 'Logical disks discovery'
+          type: DEPENDENT
+          key: lsi.ld.lld
+          delay: '0'
+          item_prototypes:
+            -
+              uuid: 511ff150b57f48f0bb55f13048e469ac
+              name: 'Controller "{#CTLID}" logical disk "{#LDNAME}" ({#LDID}) access'
+              type: DEPENDENT
+              key: 'lsi.ld.access["{#LDID}"]'
+              delay: '0'
+              history: '{$LD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''{#LDID}''][0][''Access'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$LD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Logical disks'
+            -
+              uuid: 3faf41b90a234d6b8c9db3f75770684d
+              name: 'Controller "{#CTLID}" logical disk "{#LDNAME}" ({#LDID}) cache'
+              type: DEPENDENT
+              key: 'lsi.ld.cache["{#LDID}"]'
+              delay: '0'
+              history: '{$LD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''{#LDID}''][0][''Cache'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$LD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Logical disks'
+            -
+              uuid: 697fe554b8ba4101b3eea840cf5aafb7
+              name: 'Controller "{#CTLID}" logical disk "{#LDNAME}" ({#LDID}) CacheCade'
+              type: DEPENDENT
+              key: 'lsi.ld.cac["{#LDID}"]'
+              delay: '0'
+              history: '{$LD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''{#LDID}''][0][''Cac'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$LD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Logical disks'
+            -
+              uuid: e664fd5148e7473c9a52573a6ded2390
+              name: 'Controller "{#CTLID}" logical disk "{#LDNAME}" ({#LDID}) consistency'
+              type: DEPENDENT
+              key: 'lsi.ld.consist["{#LDID}"]'
+              delay: '0'
+              history: '{$LD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''{#LDID}''][0][''Consist'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$LD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Logical disks'
+              trigger_prototypes:
+                -
+                  uuid: 9a4bb8e2646a40f49b036babc290f94d
+                  expression: 'find(/Template LSI JSON LLD ESXI/lsi.ld.consist["{#LDID}"],,"like","Yes")=0'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'find(/Template LSI JSON LLD ESXI/lsi.ld.consist["{#LDID}"],,"like","Yes")=1'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} logical disk "{#LDNAME}" [{#LDID}] consistency is "{ITEM.LASTVALUE}"'
+                  priority: WARNING
+            -
+              uuid: 2fc4d74a9b6d4b3fa9c17919c2744c22
+              name: 'Controller "{#CTLID}" logical disk "{#LDNAME}" ({#LDID}) DG/VD'
+              type: DEPENDENT
+              key: 'lsi.ld.dgvd["{#LDID}"]'
+              delay: '0'
+              history: '{$LD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''{#LDID}''][0][''DG/VD'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$LD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Logical disks'
+            -
+              uuid: 12d009805ff34feea7a04e850b5c7058
+              name: 'Controller "{#CTLID}" logical disk "{#LDNAME}" ({#LDID}) level'
+              type: DEPENDENT
+              key: 'lsi.ld.level["{#LDID}"]'
+              delay: '0'
+              history: '{$LD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''{#LDID}''][0][''TYPE'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$LD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Logical disks'
+            -
+              uuid: 4570bb7aaa214890ad91d148ff327219
+              name: 'Controller "{#CTLID}" logical disk "{#LDNAME}" ({#LDID}) scheduled check consistency'
+              type: DEPENDENT
+              key: 'lsi.ld.scc["{#LDID}"]'
+              delay: '0'
+              history: '{$LD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''{#LDID}''][0][''sCC'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$LD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Logical disks'
+            -
+              uuid: 44ff3c91c5b3440bbd1d475f97a33b1f
+              name: 'Controller "{#CTLID}" logical disk "{#LDNAME}" ({#LDID}) size'
+              type: DEPENDENT
+              key: 'lsi.ld.size["{#LDID}"]'
+              delay: '0'
+              history: '{$LD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''{#LDID}''][0][''Size'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$LD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Logical disks'
+            -
+              uuid: 8e728eb37f634067b55f1d2984c9c68a
+              name: 'Controller "{#CTLID}" logical disk "{#LDNAME}" ({#LDID}) state'
+              type: DEPENDENT
+              key: 'lsi.ld.state["{#LDID}"]'
+              delay: '0'
+              history: '{$LD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''{#LDID}''][0][''State'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$LD_THROTTLING_HB_PERIOD}'
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - |
+                      switch(value)
+                      {
+                      case 'Optl':
+                      value='Optimal';
+                      break;
+                      case 'OfLn':
+                      value='Offline';
+                      break;
+                      case 'Pdgd':
+                      value='Partially degraded';
+                      break;
+                      case 'Dgrd':
+                      value='Degraded';
+                      break;
+                      case 'Rec':
+                      value='Recovery';
+                      break;
+                      }
+                      return value
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Logical disks'
+              trigger_prototypes:
+                -
+                  uuid: 2dd67b2ff95c49f0b53c0ecbb229a492
+                  expression: 'find(/Template LSI JSON LLD ESXI/lsi.ld.state["{#LDID}"],,"like","Optimal")=0'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'find(/Template LSI JSON LLD ESXI/lsi.ld.state["{#LDID}"],,"like","Optimal")=1'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} logical disk "{#LDNAME}" [{#LDID}] state is "{ITEM.LASTVALUE}" (HW)'
+                  priority: HIGH
+          master_item:
+            key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ldinfo]'
+          lld_macro_paths:
+            -
+              lld_macro: '{#CTLID}'
+              path: $.CTLID
+            -
+              lld_macro: '{#LDID}'
+              path: $.LDID
+            -
+              lld_macro: '{#LDNAME}'
+              path: $.Name
+          preprocessing:
+            -
+              type: JAVASCRIPT
+              parameters:
+                - |
+                  var i=0;
+                  var NeedData = [];
+                  var JsonValue = JSON.parse(value);
+                  var Controllers = JsonValue.Controllers;
+                  for (var keyC in Controllers) {
+                    var ResponseStatus=JsonValue.Controllers[keyC]['Command Status']['Status'];
+                    if (ResponseStatus.match(/Success/g)) {  	
+                  		var ResponseData = JsonValue.Controllers[keyC]['Response Data'];
+                  		for (var key in ResponseData) {
+                  			if (key.match(/\/c\d{1,}\/v\d{1,}/g)) {
+                  	 		 	JsonValue.Controllers[keyC]['Response Data'][key][0]['LDID'] = key;
+                  	 		 	JsonValue.Controllers[keyC]['Response Data'][key][0]['CTLID'] = keyC;
+                  	 		 	NeedData[i] = JsonValue.Controllers[keyC]['Response Data'][key][0];
+                  	 		 	i = i + 1;
+                  			}
+                      }
+                    	
+                    }
+                  }
+                  return JSON.stringify(NeedData)
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '{$LD_THROTTLING_HB_PERIOD}'
+        -
+          uuid: 1b6c142535694690aea935a36a2179f8
+          name: 'Controllers discovery'
+          key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ctldisc]'
+          delay: '{$DISCOVERY_PERIOD}'
+          item_prototypes:
+            -
+              uuid: 2d075e7c5aa24169988c2958e3c41ab3
+              name: 'Controller "{#CTLID}" bbu info'
+              type: DEPENDENT
+              key: 'lsi.ctl.bbu.info["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}]'
+                -
+                  type: CHECK_REGEX_ERROR
+                  parameters:
+                    - '("Status":"Failure")'
+                    - \1
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Response Data'']'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_bbuinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Internal items'
+            -
+              uuid: a0a18a637f4c44d0aa82e92493d49dd0
+              name: 'Controller "{#CTLID}" bbu low charge level'
+              type: DEPENDENT
+              key: 'lsi.ctl.bbu.lowcharge["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''BBU_Firmware_Status''][10][''Value'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'lsi.ctl.bbu.info["{#CTLID}"]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+              trigger_prototypes:
+                -
+                  uuid: 36a0b709fa404f378046eeddec44612c
+                  expression: 'find(/Template LSI JSON LLD ESXI/lsi.ctl.bbu.lowcharge["{#CTLID}"],,"like","No")=0 and length(last(/Template LSI JSON LLD ESXI/lsi.ctl.bbu.lowcharge["{#CTLID}"]))>0'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} battery charge level is low'
+                  priority: AVERAGE
+            -
+              uuid: 2274c5603ca84f179efbce237eb570a2
+              name: 'Controller "{#CTLID}" bbu need to replace'
+              type: DEPENDENT
+              key: 'lsi.ctl.bbu.replace["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''BBU_Firmware_Status''][9][''Value'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'lsi.ctl.bbu.info["{#CTLID}"]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+              trigger_prototypes:
+                -
+                  uuid: 6b1726b04a794219b0c3ecde186b43d4
+                  expression: '(find(/Template LSI JSON LLD ESXI/lsi.ctl.bbu.replace["{#CTLID}"],,"like","No")=0 and length(last(/Template LSI JSON LLD ESXI/lsi.ctl.bbu.replace["{#CTLID}"]))>0)'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} bbu battery is need to be replaced'
+                  priority: AVERAGE
+            -
+              uuid: 7380209b83b14e818a3f3b7806782032
+              name: 'Controller "{#CTLID}" bbu serial number'
+              type: DEPENDENT
+              key: 'lsi.ctl.bbu.sn["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''BBU_Design_Info''][4][''Value'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'lsi.ctl.bbu.info["{#CTLID}"]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+              trigger_prototypes:
+                -
+                  uuid: d8d85653dd444145a8c9992c94ddff79
+                  expression: '((last(/Template LSI JSON LLD ESXI/lsi.ctl.bbu.sn["{#CTLID}"],#1)<>last(/Template LSI JSON LLD ESXI/lsi.ctl.bbu.sn["{#CTLID}"],#2))=1 and length(last(/Template LSI JSON LLD ESXI/lsi.ctl.bbu.sn["{#CTLID}"]))>0)'
+                  recovery_mode: NONE
+                  name: '{HOST.NAME}: LSI controller {#CTLID} bbu battery was replaced'
+                  priority: INFO
+            -
+              uuid: 48ddc5b91fd5443bb207d2bf030a4882
+              name: 'Controller "{#CTLID}" bbu state'
+              type: DEPENDENT
+              key: 'lsi.ctl.bbu.state["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''BBU_Info''][4][''Value'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'lsi.ctl.bbu.info["{#CTLID}"]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+              trigger_prototypes:
+                -
+                  uuid: 52428fad493f4f21917f96638b44f7eb
+                  expression: '(find(/Template LSI JSON LLD ESXI/lsi.ctl.bbu.state["{#CTLID}"],,"like","Optimal")=0 and length(last(/Template LSI JSON LLD ESXI/lsi.ctl.bbu.state["{#CTLID}"]))>0)'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} bbu battery state is {ITEM.LASTVALUE}'
+                  priority: AVERAGE
+            -
+              uuid: 2500fc92b52e414596279483aeccc124
+              name: 'Controller "{#CTLID}" bbu type'
+              type: DEPENDENT
+              key: 'lsi.ctl.bbu.type["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''BBU_Info''][0][''Value'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'lsi.ctl.bbu.info["{#CTLID}"]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+            -
+              uuid: e9c947b1935e4ee0a09213fe1463c0de
+              name: 'Controller "{#CTLID}" BBU'
+              type: DEPENDENT
+              key: 'lsi.ctl.bbu["{#CTLID}"]'
+              delay: '0'
+              history: '{$ADAP_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''HwCfg''][''BBU'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ctlinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+                -
+                  tag: Application
+                  value: 'LSI controllers'
+              trigger_prototypes:
+                -
+                  uuid: 7cc46ab4db294573ae7ee2e875f676ad
+                  expression: 'change(/Template LSI JSON LLD ESXI/lsi.ctl.bbu["{#CTLID}"])=1'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'find(/Template LSI JSON LLD ESXI/lsi.ctl.bbu["{#CTLID}"],,"like","Present")=1'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} BBU is {ITEM.LASTVALUE}'
+                  priority: AVERAGE
+                  description: 'find(/Template LSI JSON LLD/lsi.ctl.bbu["{#CTLID}"],,"like","Present")=0'
+            -
+              uuid: a51b7c4830c147faa7d419aac7b40506
+              name: 'Controller "{#CTLID}" cache size'
+              type: DEPENDENT
+              key: 'lsi.ctl.cache["{#CTLID}"]'
+              delay: '0'
+              history: '{$ADAP_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''HwCfg''][''CacheVault Flash Size'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ctlinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI controllers'
+            -
+              uuid: 0ee4dd4551424a1f92be89a0a774f6e5
+              name: 'Controller "{#CTLID}" cache vault info'
+              type: DEPENDENT
+              key: 'lsi.ctl.cv.info["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}]'
+                -
+                  type: CHECK_REGEX_ERROR
+                  parameters:
+                    - '("Status":"Failure")'
+                    - \1
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Response Data'']'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_cvinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Internal items'
+            -
+              uuid: 477bf2efacb249398f50535522c76fc6
+              name: 'Controller "{#CTLID}" cache vault need to replace'
+              type: DEPENDENT
+              key: 'lsi.ctl.cv.replace["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Firmware_Status''][1][''Value'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'lsi.ctl.cv.info["{#CTLID}"]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+              trigger_prototypes:
+                -
+                  uuid: f61fd6c5cb514cceab777ed39e47d7b0
+                  expression: '(find(/Template LSI JSON LLD ESXI/lsi.ctl.cv.replace["{#CTLID}"],,"like","No")=0 and length(last(/Template LSI JSON LLD ESXI/lsi.ctl.cv.replace["{#CTLID}"]))>0)'
+                  name: '{HOST.NAME} LSI controller {#CTLID} cachevault battery is need to be replaced'
+                  priority: AVERAGE
+            -
+              uuid: 24d26b387c5d44209476408805296a59
+              name: 'Controller "{#CTLID}" cache vault serial number'
+              type: DEPENDENT
+              key: 'lsi.ctl.cv.sn["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Design_Info''][1][''Value'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'lsi.ctl.cv.info["{#CTLID}"]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+              trigger_prototypes:
+                -
+                  uuid: 640fab121c5d44169775872d88867872
+                  expression: '((last(/Template LSI JSON LLD ESXI/lsi.ctl.cv.sn["{#CTLID}"],#1)<>last(/Template LSI JSON LLD ESXI/lsi.ctl.cv.sn["{#CTLID}"],#2))=1 and length(last(/Template LSI JSON LLD ESXI/lsi.ctl.cv.sn["{#CTLID}"]))>0)'
+                  recovery_mode: NONE
+                  name: '{HOST.NAME}: LSI controller {#CTLID} cachevault battery was replaced'
+                  priority: INFO
+            -
+              uuid: 11192c91814a4adbad84488e924b6ad6
+              name: 'Controller "{#CTLID}" cache vault state'
+              type: DEPENDENT
+              key: 'lsi.ctl.cv.state["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Cachevault_Info''][2][''Value'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'lsi.ctl.cv.info["{#CTLID}"]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+              trigger_prototypes:
+                -
+                  uuid: daf20595b56c44168aa6249362639b74
+                  expression: '(find(/Template LSI JSON LLD ESXI/lsi.ctl.cv.state["{#CTLID}"],,"like","Optimal")=0 and length(last(/Template LSI JSON LLD ESXI/lsi.ctl.cv.state["{#CTLID}"]))>0)'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} cachevault battery state is {ITEM.LASTVALUE}'
+                  priority: AVERAGE
+            -
+              uuid: 5c0654a44253449187e6ccb9b187f95d
+              name: 'Controller "{#CTLID}" cache vault temp'
+              type: DEPENDENT
+              key: 'lsi.ctl.cv.temp["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '{$BATTERY_TREND_PERIOD}'
+              value_type: FLOAT
+              units: °C
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Cachevault_Info''][1][''Value'']'
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - C
+                    - ''
+                -
+                  type: TRIM
+                  parameters:
+                    - ' '
+              master_item:
+                key: 'lsi.ctl.cv.info["{#CTLID}"]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+                -
+                  tag: Application
+                  value: Temp
+              trigger_prototypes:
+                -
+                  uuid: d82a0e9f874b47edab7accd8ea6fc6a6
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.ctl.cv.temp["{#CTLID}"],#1)>{$ADAP_CACHE_TEMP_AVERAGE}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} cachevault battery temp is {ITEM.LASTVALUE}'
+                  priority: AVERAGE
+                  dependencies:
+                    -
+                      name: '{HOST.NAME}: LSI controller {#CTLID} cachevault battery temp is {ITEM.LASTVALUE} (HW)'
+                      expression: 'last(/Template LSI JSON LLD ESXI/lsi.ctl.cv.temp["{#CTLID}"],#1)>{$ADAP_CACHE_TEMP_CRIT}'
+                -
+                  uuid: 69c5518a0e194ee09d16fcd1acea1ef2
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.ctl.cv.temp["{#CTLID}"],#1)>{$ADAP_CACHE_TEMP_WARNING}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} cachevault battery temp is {ITEM.LASTVALUE}'
+                  priority: WARNING
+                  dependencies:
+                    -
+                      name: '{HOST.NAME}: LSI controller {#CTLID} cachevault battery temp is {ITEM.LASTVALUE}'
+                      expression: 'last(/Template LSI JSON LLD ESXI/lsi.ctl.cv.temp["{#CTLID}"],#1)>{$ADAP_CACHE_TEMP_AVERAGE}'
+                -
+                  uuid: 43ea262c4b424b1395ae5770c183b910
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.ctl.cv.temp["{#CTLID}"],#1)>{$ADAP_CACHE_TEMP_CRIT}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} cachevault battery temp is {ITEM.LASTVALUE} (HW)'
+                  priority: HIGH
+            -
+              uuid: 7d6bdf8320834a9c993365ee8be782e5
+              name: 'Controller "{#CTLID}" cache vault type'
+              type: DEPENDENT
+              key: 'lsi.ctl.cv.type["{#CTLID}"]'
+              delay: '0'
+              history: '{$BATTERY_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Cachevault_Info''][0][''Value'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'lsi.ctl.cv.info["{#CTLID}"]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI battery'
+            -
+              uuid: 15d0fbd7dac34a92b6606352d8ba08a6
+              name: 'Controller "{#CTLID}" memory size'
+              type: DEPENDENT
+              key: 'lsi.ctl.memory["{#CTLID}"]'
+              delay: '0'
+              history: '{$ADAP_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''HwCfg''][''On Board Memory Size'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ctlinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI controllers'
+            -
+              uuid: 0c362cbaa7914539b23d8c8b1db878e3
+              name: 'Controller "{#CTLID}" model'
+              type: DEPENDENT
+              key: 'lsi.ctl.model["{#CTLID}"]'
+              delay: '0'
+              history: '{$ADAP_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Basics''][''Model'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ctlinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI controllers'
+            -
+              uuid: 3e99486c9a294b7086de9d7bb79ae4fe
+              name: 'Controller "{#CTLID}" ROC temp'
+              type: DEPENDENT
+              key: 'lsi.ctl.roctemp["{#CTLID}"]'
+              delay: '0'
+              history: '{$ADAP_HISTORY_PERIOD}'
+              trends: '{$ADAP_TREND_PERIOD}'
+              value_type: FLOAT
+              units: °C
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''HwCfg''][''ROC temperature(Degree Celsius)'']'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ctlinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI controllers'
+                -
+                  tag: Application
+                  value: Temp
+              trigger_prototypes:
+                -
+                  uuid: 217a28e617a242d2896fd0750b1cf026
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.ctl.roctemp["{#CTLID}"],#1)>{$ADAP_ROC_TEMP_AVERAGE}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} ROC temp is {ITEM.LASTVALUE}'
+                  priority: AVERAGE
+                  dependencies:
+                    -
+                      name: '{HOST.NAME}: LSI controller {#CTLID} ROC temp is {ITEM.LASTVALUE}'
+                      expression: 'last(/Template LSI JSON LLD ESXI/lsi.ctl.roctemp["{#CTLID}"],#1)>{$ADAP_ROC_TEMP_CRIT}'
+                -
+                  uuid: 1aff8093fd034e428966a01d442d62f1
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.ctl.roctemp["{#CTLID}"],#1)>{$ADAP_ROC_TEMP_CRIT}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} ROC temp is {ITEM.LASTVALUE}'
+                  priority: HIGH
+                -
+                  uuid: 8d4df46dfc9140d4b5cd4890d9b259d7
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.ctl.roctemp["{#CTLID}"],#1)>{$ADAP_ROC_TEMP_WARNING}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} ROC temp is {ITEM.LASTVALUE}'
+                  priority: WARNING
+                  dependencies:
+                    -
+                      name: '{HOST.NAME}: LSI controller {#CTLID} ROC temp is {ITEM.LASTVALUE}'
+                      expression: 'last(/Template LSI JSON LLD ESXI/lsi.ctl.roctemp["{#CTLID}"],#1)>{$ADAP_ROC_TEMP_AVERAGE}'
+            -
+              uuid: e5412b5c1a344d1ea0d14044bcfb3dc0
+              name: 'Controller "{#CTLID}" serial number'
+              type: DEPENDENT
+              key: 'lsi.ctl.sn["{#CTLID}"]'
+              delay: '0'
+              history: '{$ADAP_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Basics''][''Serial Number'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ctlinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI controllers'
+              trigger_prototypes:
+                -
+                  uuid: d76af64105de49cfb41522bfc85b5a22
+                  expression: '(last(/Template LSI JSON LLD ESXI/lsi.ctl.sn["{#CTLID}"],#1)<>last(/Template LSI JSON LLD ESXI/lsi.ctl.sn["{#CTLID}"],#2))=1 and length(last(/Template LSI JSON LLD ESXI/lsi.ctl.sn["{#CTLID}"]))>0'
+                  recovery_mode: NONE
+                  name: '{HOST.NAME}: LSI controller {#CTLID} was replaced'
+                  priority: INFO
+            -
+              uuid: 464c4a2c154d4806870b5509f99a4e74
+              name: 'Controller "{#CTLID}" state (health)'
+              type: DEPENDENT
+              key: 'lsi.ctl.state["{#CTLID}"]'
+              delay: '0'
+              history: '{$ADAP_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Status''][''Controller Status'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$ADAP_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_ctlinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI controllers'
+              trigger_prototypes:
+                -
+                  uuid: 8c5675c31a204131a9ea0295407caa88
+                  expression: 'find(/Template LSI JSON LLD ESXI/lsi.ctl.state["{#CTLID}"],,"like","Opt")=0 and find(/Template LSI JSON LLD ESXI/lsi.ctl.state["{#CTLID}"],,"like","OK")=0'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'find(/Template LSI JSON LLD ESXI/lsi.ctl.state["{#CTLID}"],,"like","Opt")=1 or find(/Template LSI JSON LLD ESXI/lsi.ctl.state["{#CTLID}"],,"like","OK")=1'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} status is {ITEM.LASTVALUE} (HW)'
+                  priority: HIGH
+          graph_prototypes:
+            -
+              uuid: 0a97271458ba4ed7b23017b0c5c0c4e5
+              name: 'Controller "{#CTLID}" temp'
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: F63100
+                  item:
+                    host: 'Template LSI JSON LLD ESXI'
+                    key: 'lsi.ctl.roctemp["{#CTLID}"]'
+                -
+                  sortorder: '2'
+                  color: 26A69A
+                  item:
+                    host: 'Template LSI JSON LLD ESXI'
+                    key: 'lsi.ctl.cv.temp["{#CTLID}"]'
+          lld_macro_paths:
+            -
+              lld_macro: '{#CTLID}'
+              path: $.Ctl
+          preprocessing:
+            -
+              type: CHECK_JSON_ERROR
+              parameters:
+                - '$[''Controllers''][0][''Command Status''][''Detailed Status''][0][''ErrMsg'']'
+            -
+              type: JSONPATH
+              parameters:
+                - '$[''Controllers''][0][''Response Data''][''System Overview'']'
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '{$ADAP_THROTTLING_HB_PERIOD}'
+        -
+          uuid: 69b9aa5a0f2c4a21b021df512a44e60d
+          name: 'Physical disks NE discovery'
+          key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepddisc]'
+          delay: '{$DISCOVERY_PERIOD}'
+          description: |
+            ne=No Enclosure
+            Disks without Enclosure or Backplane
+          item_prototypes:
+            -
+              uuid: 6ce3480082b64c79a340398ab174ce61
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) DriveGroup'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.dg["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''DG'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: aa96dc2a084b4f4f96504abb13c28ebc
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) DID-Device ID'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.did["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''DID'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: cf2fe15ae57b4d84934647a0697ef9eb
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) Enclosure Device ID : Slot No'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.eid["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''EID:Slt'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 1d181bee815346728866a10064e149ee
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) firmware'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.fw["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} Device attributes''][''Firmware Revision'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: a981afbfa90345778ea1fca26c179b36
+                  expression: '(last(/Template LSI JSON LLD ESXI/lsi.pd.ne.fw["{#PDID}"],#1)<>last(/Template LSI JSON LLD ESXI/lsi.pd.ne.fw["{#PDID}"],#2))=1'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] firmware was changed'
+                  priority: INFO
+            -
+              uuid: 63d1e2c9ec104df19da3886373765da7
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) interface'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.intf["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Intf'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 4d98a3c2c08c46479f8cc31e9882128e
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) media error count'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.media.error.count["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '{$PD_TREND_PERIOD}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''Media Error Count'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: dfc8fd8f596d4ba0ad62a5d7fb33a86a
+                  expression: 'change(/Template LSI JSON LLD ESXI/lsi.pd.ne.media.error.count["{#PDID}"])>0'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] media error'
+                  priority: INFO
+            -
+              uuid: 3b454bcbb5204ae1999a8c77d98eda50
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) media type'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.med["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Med'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: b7522c8c3fb543f08e1cf3a24eadc723
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) model'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.model["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Model'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 85fc037e2e2c48c4ad962f38263004a6
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) name'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.name["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''EID:Slt'']'
+                -
+                  type: REGEX
+                  parameters:
+                    - '^(.*)$'
+                    - '{#PDNAME}'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 78bd3871d68f4703b6a4985c6e699588
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) other error count'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.other.error.count["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '{$PD_TREND_PERIOD}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''Other Error Count'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: 884efde8d5644a7db8b7da99199eec22
+                  expression: 'change(/Template LSI JSON LLD ESXI/lsi.pd.ne.other.error.count["{#PDID}"])>0'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] other error'
+                  priority: INFO
+            -
+              uuid: cb6e407c942e4936b1719628aa948742
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) protection info'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.pi["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''PI'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 8b8132b0bd6144c1a119132564a5612c
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) predictive failure count'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.predictive.failure.count["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '{$PD_TREND_PERIOD}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''Predictive Failure Count'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: 257abf28265c4410af91d55268ac04f0
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.pd.ne.predictive.failure.count["{#PDID}"])>0'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] predictive failure'
+                  priority: WARNING
+            -
+              uuid: 8c0c7769bba6416a9475593e4cc2e964
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) self encryptive drive'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.sed["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''SED'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 939eb286cd8d4fc4b0741691f55841dc
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) sector size'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.sesz["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''SeSz'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: deb818341a2845899468409f1e2a1970
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) shield counter'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.shield.counter["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '{$PD_TREND_PERIOD}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''Shield Counter'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: a91400731c73429398ca3980dd1f4290
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) size'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.size["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Size'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 7ad08af88ecc4ccfac721436515675db
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) S.M.A.R.T alert flag'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.smart.alert.flag["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''S.M.A.R.T alert flagged by drive'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: eb675b56d7b74e1c968d58c1273895cd
+                  expression: 'find(/Template LSI JSON LLD ESXI/lsi.pd.ne.smart.alert.flag["{#PDID}"],,"like","No")=0 and length(last(/Template LSI JSON LLD ESXI/lsi.pd.ne.smart.alert.flag["{#PDID}"]))>0'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] S.M.A.R.T alert flag {ITEM.LASTVALUE} (HW)'
+                  priority: AVERAGE
+            -
+              uuid: 9ad27c8fe6f54c9f8851406e70da5b2e
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) serial number'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.sn["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} Device attributes''][''SN'']'
+                -
+                  type: RTRIM
+                  parameters:
+                    - ' '
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: b3ad28802f8642979dd692dc63291242
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) spun'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.spun["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Sp'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - |
+                      switch(value)
+                      {
+                      case 'Onln':
+                      value='Online';
+                      break;
+                      case 'UGood':
+                      value='Unconfigured-Good';
+                      break;
+                      case 'UBad':
+                      value='Unconfigured-Bad';
+                      break;
+                      case 'Msng':
+                      value='Missing';
+                      break;
+                      case 'Offln':
+                      value='Offline';
+                      break;
+                      case 'GHS':
+                      value='Global Hot Spare';
+                      break;
+                      case 'DHS':
+                      value='Dedicated Hot Spare';
+                      break;
+                      case 'Rbld':
+                      value='Rebuild';
+                      break;
+                      case 'U':
+                      value='Up';
+                      break;
+                      case 'D':
+                      value='Down/PowerSave';
+                      break;
+                      case 'T':
+                      value='Transition';
+                      break;
+                      case 'F':
+                      value='Foreign';
+                      break;
+                      case 'UGUnsp':
+                      value='Unsupported';
+                      break;
+                      case 'UGShld':
+                      value='UnConfigured shielded';
+                      break;
+                      case 'HSPShld':
+                      value='Hotspare shielded';
+                      break;
+                      case 'CFShld':
+                      value='Configured shielded';
+                      break;
+                      case 'Cpybck':
+                      value='CopyBack';
+                      break;
+                      case 'CBShld':
+                      value='Copyback Shielded';
+                      break;
+                      }
+                      return value
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 61b6a3efe1d949db926456e4fc8d4bf8
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) state'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.state["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''State'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - |
+                      switch(value)
+                      {
+                      case 'Onln':
+                      value='Online';
+                      break;
+                      case 'UGood':
+                      value='Unconfigured-Good';
+                      break;
+                      case 'UBad':
+                      value='Unconfigured-Bad';
+                      break;
+                      case 'Msng':
+                      value='Missing';
+                      break;
+                      case 'Offln':
+                      value='Offline';
+                      break;
+                      case 'GHS':
+                      value='Global Hot Spare';
+                      break;
+                      case 'DHS':
+                      value='Dedicated Hot Spare';
+                      break;
+                      case 'Rbld':
+                      value='Rebuild';
+                      break;
+                      case 'U':
+                      value='Up';
+                      break;
+                      case 'D':
+                      value='Down/PowerSave';
+                      break;
+                      case 'T':
+                      value='Transition';
+                      break;
+                      case 'F':
+                      value='Foreign';
+                      break;
+                      case 'UGUnsp':
+                      value='Unsupported';
+                      break;
+                      case 'UGShld':
+                      value='UnConfigured shielded';
+                      break;
+                      case 'HSPShld':
+                      value='Hotspare shielded';
+                      break;
+                      case 'CFShld':
+                      value='Configured shielded';
+                      break;
+                      case 'Cpybck':
+                      value='CopyBack';
+                      break;
+                      case 'CBShld':
+                      value='Copyback Shielded';
+                      break;
+                      }
+                      return value
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: 4ea8b74d54d9472ab5a5a558f94535f8
+                  expression: |
+                    (find(/Template LSI JSON LLD ESXI/lsi.pd.ne.state["{#PDID}"],,"like","Unconfigured-Bad")=1 
+                    or find(/Template LSI JSON LLD ESXI/lsi.pd.ne.state["{#PDID}"],,"like","Unconfigured-Good")=1 
+                    or find(/Template LSI JSON LLD ESXI/lsi.pd.ne.state["{#PDID}"],,"like","Missing")=1 
+                    or find(/Template LSI JSON LLD ESXI/lsi.pd.ne.state["{#PDID}"],,"like","Offline")=1 
+                    or find(/Template LSI JSON LLD ESXI/lsi.pd.ne.state["{#PDID}"],,"like","Foreign")=1) 
+                    and length(last(/Template LSI JSON LLD ESXI/lsi.pd.ne.state["{#PDID}"]))>0
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'find(/Template LSI JSON LLD ESXI/lsi.pd.ne.state["{#PDID}"],,"like","Unconfigured-Good")=1 or find(/Template LSI JSON LLD ESXI/lsi.pd.ne.state["{#PDID}"],,"like","Online")=1'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] state is "{ITEM.LASTVALUE}" (HW)'
+                  priority: HIGH
+            -
+              uuid: 743c7f0dc0474ad582446f5a8b4197fc
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) temp'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.temp["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '{$PD_TREND_PERIOD}'
+              units: °C
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''Drive Temperature'']'
+                -
+                  type: REGEX
+                  parameters:
+                    - '^(.+)C.*$'
+                    - \1
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: 9a11266fc15c4bf1871ff27686372d1e
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.pd.ne.temp["{#PDID}"])>{$PD_TEMP_AVERAGE}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] temp average {ITEM.LASTVALUE} (HW)'
+                  priority: AVERAGE
+                -
+                  uuid: 4542967e720e4627b2bb202a19ff40a6
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.pd.ne.temp["{#PDID}"])>{$PD_TEMP_CRIT}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] temp high {ITEM.LASTVALUE} (HW)'
+                  priority: HIGH
+                -
+                  uuid: d5ca38ea2b414fd08281c7a45cfc70a9
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.pd.ne.temp["{#PDID}"])>{$PD_TEMP_WARNING}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] temp warning {ITEM.LASTVALUE} (HW)'
+                  priority: WARNING
+            -
+              uuid: 5da7a21f26d948258acb76ef9c256641
+              name: 'Controller "{#CTLID}" NE physical disk "{#PDID}" ({#EID}) type'
+              type: DEPENDENT
+              key: 'lsi.pd.ne.type["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Type'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - |
+                      switch(value)
+                      {
+                      case 'Onln':
+                      value='Online';
+                      break;
+                      case 'UGood':
+                      value='Unconfigured-Good';
+                      break;
+                      case 'UBad':
+                      value='Unconfigured-Bad';
+                      break;
+                      case 'Msng':
+                      value='Missing';
+                      break;
+                      case 'Offln':
+                      value='Offline';
+                      break;
+                      case 'GHS':
+                      value='Global Hot Spare';
+                      break;
+                      case 'DHS':
+                      value='Dedicated Hot Spare';
+                      break;
+                      case 'Rbld':
+                      value='Rebuild';
+                      break;
+                      case 'U':
+                      value='Up';
+                      break;
+                      case 'D':
+                      value='Down/PowerSave';
+                      break;
+                      case 'T':
+                      value='Transition';
+                      break;
+                      case 'F':
+                      value='Foreign';
+                      break;
+                      case 'UGUnsp':
+                      value='Unsupported';
+                      break;
+                      case 'UGShld':
+                      value='UnConfigured shielded';
+                      break;
+                      case 'HSPShld':
+                      value='Hotspare shielded';
+                      break;
+                      case 'CFShld':
+                      value='Configured shielded';
+                      break;
+                      case 'Cpybck':
+                      value='CopyBack';
+                      break;
+                      case 'CBShld':
+                      value='Copyback Shielded';
+                      break;
+                      }
+                      return value
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_nepdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+          lld_macro_paths:
+            -
+              lld_macro: '{#CTLID}'
+              path: $.CTLID
+            -
+              lld_macro: '{#CTLPDID}'
+              path: $.CTLPDID
+            -
+              lld_macro: '{#EID}'
+              path: '$.[''EID:Slt'']'
+            -
+              lld_macro: '{#PDID}'
+              path: $.PDID
+            -
+              lld_macro: '{#PDNAME}'
+              path: $.PDNAME
+          preprocessing:
+            -
+              type: JAVASCRIPT
+              parameters:
+                - |
+                  var i=0;
+                  var NeedData = [];
+                  var JsonValue = JSON.parse(value);
+                  var Controllers = JsonValue.Controllers;
+                  for (var keyC in Controllers) {
+                  	if (JsonValue.Controllers[keyC]['Response Data'] && JsonValue.Controllers[keyC]['Response Data']['Drive Information']) {
+                  		var DriveInformation = JsonValue.Controllers[keyC]['Response Data']['Drive Information'];
+                  		for (var key in DriveInformation) {       
+                   		 	JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key]['PDID'] = i;
+                   		 	JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key]['PDNAME'] = '/c' + keyC + JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key]['EID:Slt'].trim().replace(':','/s');
+                   		 	JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key]['CTLPDID'] = key;
+                   		 	JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key]['CTLID'] = keyC;
+                   		 	NeedData[i] = JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key];
+                   		 	i = i + 1;
+                  		}
+                  	}
+                  }
+                  return JSON.stringify(NeedData)
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '{$PD_THROTTLING_HB_PERIOD}'
+        -
+          uuid: 22097a65d5504e288bc9ae25fdc63c1f
+          name: 'Physical disks discovery'
+          key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pddisc]'
+          delay: '{$DISCOVERY_PERIOD}'
+          item_prototypes:
+            -
+              uuid: 1a2a3a7187714359b59acee963acf179
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) DriveGroup'
+              type: DEPENDENT
+              key: 'lsi.pd.dg["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''DG'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: b771b6a8475a45e69b880dbab61ae6c4
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) DID-Device ID'
+              type: DEPENDENT
+              key: 'lsi.pd.did["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''DID'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 5c07b9d66f7545c986fa545679652330
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) Enclosure Device ID : Slot No'
+              type: DEPENDENT
+              key: 'lsi.pd.eid["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''EID:Slt'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: db0e76882822434b896152bf9a926068
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) firmware'
+              type: DEPENDENT
+              key: 'lsi.pd.fw["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} Device attributes''][''Firmware Revision'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: d5f1df1bfcb54225ab6da061b04b0cfc
+                  expression: '(last(/Template LSI JSON LLD ESXI/lsi.pd.fw["{#PDID}"],#1)<>last(/Template LSI JSON LLD ESXI/lsi.pd.fw["{#PDID}"],#2))=1'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] firmware was changed'
+                  priority: INFO
+            -
+              uuid: 5413636ed1284e58b405e155a12be8ed
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) interface'
+              type: DEPENDENT
+              key: 'lsi.pd.intf["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Intf'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 314e7691dae148b4aeb1828b78ba4714
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) media error count'
+              type: DEPENDENT
+              key: 'lsi.pd.media.error.count["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '{$PD_TREND_PERIOD}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''Media Error Count'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: a7ba081cfcde4b73a9ab88e90d1a7c54
+                  expression: 'change(/Template LSI JSON LLD ESXI/lsi.pd.media.error.count["{#PDID}"])>0'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] media error'
+                  priority: INFO
+            -
+              uuid: aba010342b7c41749fd95a1a4ae34d72
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) media type'
+              type: DEPENDENT
+              key: 'lsi.pd.med["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Med'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 4e03ec1025154c29af1c29f86c29cf45
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) model'
+              type: DEPENDENT
+              key: 'lsi.pd.model["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Model'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 19f4311f52a74222b3c8a66d95df9bfb
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) name'
+              type: DEPENDENT
+              key: 'lsi.pd.name["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''EID:Slt'']'
+                -
+                  type: REGEX
+                  parameters:
+                    - '^(.*)$'
+                    - '{#PDNAME}'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 7649a70aff26433286a6e964cdb3b7e1
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) other error count'
+              type: DEPENDENT
+              key: 'lsi.pd.other.error.count["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '{$PD_TREND_PERIOD}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''Other Error Count'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: deb77405738c40d5970df1fa2a6927e9
+                  expression: 'change(/Template LSI JSON LLD ESXI/lsi.pd.other.error.count["{#PDID}"])>0'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] other error'
+                  priority: INFO
+            -
+              uuid: 1701b7fa09e14bdfa7a88e9453152d63
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) protection info'
+              type: DEPENDENT
+              key: 'lsi.pd.pi["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''PI'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: b01d38b5ae0c49618fc014bc4edef106
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) predictive failure count'
+              type: DEPENDENT
+              key: 'lsi.pd.predictive.failure.count["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '{$PD_TREND_PERIOD}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''Predictive Failure Count'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: f606e03107a4427f8abd0e52c8b678e0
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.pd.predictive.failure.count["{#PDID}"])>0'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] predictive failure'
+                  priority: WARNING
+            -
+              uuid: 49b6a5364dea4f3d8f9e4f31ae1c2c26
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) self encryptive drive'
+              type: DEPENDENT
+              key: 'lsi.pd.sed["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''SED'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 87e579ac50fa4bb9b1ff5958fbc5f237
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) sector size'
+              type: DEPENDENT
+              key: 'lsi.pd.sesz["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''SeSz'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 570b034c47584fcea5d7677bbd2ae4fe
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) shield counter'
+              type: DEPENDENT
+              key: 'lsi.pd.shield.counter["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '{$PD_TREND_PERIOD}'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''Shield Counter'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 3063b41b303f4119a6b859cf97105faa
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) size'
+              type: DEPENDENT
+              key: 'lsi.pd.size["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Size'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: d03615e7d3d94c4cbe631a48b8825b0e
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) S.M.A.R.T alert flag'
+              type: DEPENDENT
+              key: 'lsi.pd.smart.alert.flag["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''S.M.A.R.T alert flagged by drive'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: 32dc9ccd90d04ca29476851e4c13797c
+                  expression: 'find(/Template LSI JSON LLD ESXI/lsi.pd.smart.alert.flag["{#PDID}"],,"like","No")=0 and length(last(/Template LSI JSON LLD ESXI/lsi.pd.smart.alert.flag["{#PDID}"]))>0'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] S.M.A.R.T alert flag {ITEM.LASTVALUE} (HW)'
+                  priority: AVERAGE
+            -
+              uuid: 076a62354d7a44b592c987565a61e0fa
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) serial number'
+              type: DEPENDENT
+              key: 'lsi.pd.sn["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} Device attributes''][''SN'']'
+                -
+                  type: RTRIM
+                  parameters:
+                    - ' '
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: b0c466077944431eb8297dd4ef0e5f27
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) spun'
+              type: DEPENDENT
+              key: 'lsi.pd.spun["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Sp'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - |
+                      switch(value)
+                      {
+                      case 'Onln':
+                      value='Online';
+                      break;
+                      case 'UGood':
+                      value='Unconfigured-Good';
+                      break;
+                      case 'UBad':
+                      value='Unconfigured-Bad';
+                      break;
+                      case 'Msng':
+                      value='Missing';
+                      break;
+                      case 'Offln':
+                      value='Offline';
+                      break;
+                      case 'GHS':
+                      value='Global Hot Spare';
+                      break;
+                      case 'DHS':
+                      value='Dedicated Hot Spare';
+                      break;
+                      case 'Rbld':
+                      value='Rebuild';
+                      break;
+                      case 'U':
+                      value='Up';
+                      break;
+                      case 'D':
+                      value='Down/PowerSave';
+                      break;
+                      case 'T':
+                      value='Transition';
+                      break;
+                      case 'F':
+                      value='Foreign';
+                      break;
+                      case 'UGUnsp':
+                      value='Unsupported';
+                      break;
+                      case 'UGShld':
+                      value='UnConfigured shielded';
+                      break;
+                      case 'HSPShld':
+                      value='Hotspare shielded';
+                      break;
+                      case 'CFShld':
+                      value='Configured shielded';
+                      break;
+                      case 'Cpybck':
+                      value='CopyBack';
+                      break;
+                      case 'CBShld':
+                      value='Copyback Shielded';
+                      break;
+                      }
+                      return value
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+            -
+              uuid: 05264c33321b4b8cbc24051397df658b
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) state'
+              type: DEPENDENT
+              key: 'lsi.pd.state["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''State'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - |
+                      switch(value)
+                      {
+                      case 'Onln':
+                      value='Online';
+                      break;
+                      case 'UGood':
+                      value='Unconfigured-Good';
+                      break;
+                      case 'UBad':
+                      value='Unconfigured-Bad';
+                      break;
+                      case 'Msng':
+                      value='Missing';
+                      break;
+                      case 'Offln':
+                      value='Offline';
+                      break;
+                      case 'GHS':
+                      value='Global Hot Spare';
+                      break;
+                      case 'DHS':
+                      value='Dedicated Hot Spare';
+                      break;
+                      case 'Rbld':
+                      value='Rebuild';
+                      break;
+                      case 'U':
+                      value='Up';
+                      break;
+                      case 'D':
+                      value='Down/PowerSave';
+                      break;
+                      case 'T':
+                      value='Transition';
+                      break;
+                      case 'F':
+                      value='Foreign';
+                      break;
+                      case 'UGUnsp':
+                      value='Unsupported';
+                      break;
+                      case 'UGShld':
+                      value='UnConfigured shielded';
+                      break;
+                      case 'HSPShld':
+                      value='Hotspare shielded';
+                      break;
+                      case 'CFShld':
+                      value='Configured shielded';
+                      break;
+                      case 'Cpybck':
+                      value='CopyBack';
+                      break;
+                      case 'CBShld':
+                      value='Copyback Shielded';
+                      break;
+                      }
+                      return value
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: 22b0a69c047740149cee315678b87c1e
+                  expression: |
+                    (find(/Template LSI JSON LLD ESXI/lsi.pd.state["{#PDID}"],,"like","Unconfigured-Bad")=1 
+                    or find(/Template LSI JSON LLD ESXI/lsi.pd.state["{#PDID}"],,"like","Missing")=1 
+                    or find(/Template LSI JSON LLD ESXI/lsi.pd.state["{#PDID}"],,"like","Offline")=1 
+                    or find(/Template LSI JSON LLD ESXI/lsi.pd.state["{#PDID}"],,"like","Foreign")=1) 
+                    and length(last(/Template LSI JSON LLD ESXI/lsi.pd.state["{#PDID}"]))>0
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'find(/Template LSI JSON LLD ESXI/lsi.pd.state["{#PDID}"],,"like","Unconfigured-Good")=1 or find(/Template LSI JSON LLD ESXI/lsi.pd.state["{#PDID}"],,"like","Online")=1 or find(/Template LSI JSON LLD ESXI/lsi.pd.state["{#PDID}"],,"like","Optimal")=1 or find(/Template LSI JSON LLD ESXI/lsi.pd.state["{#PDID}"],,"like","Spare")=1'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] state is "{ITEM.LASTVALUE}" (HW)'
+                  priority: HIGH
+            -
+              uuid: 2713784eabf14ab2aa11011b798c88b5
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) temp'
+              type: DEPENDENT
+              key: 'lsi.pd.temp["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '{$PD_TREND_PERIOD}'
+              units: °C
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME} - Detailed Information''][''Drive {#PDNAME} State''][''Drive Temperature'']'
+                -
+                  type: REGEX
+                  parameters:
+                    - '^(.+)C.*$'
+                    - \1
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+              trigger_prototypes:
+                -
+                  uuid: 1bb54ab153084a2f85d0b95e2f5f3c9b
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.pd.temp["{#PDID}"])>{$PD_TEMP_AVERAGE}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] temp average {ITEM.LASTVALUE} (HW)'
+                  priority: AVERAGE
+                -
+                  uuid: 57afc8a6baf94232b13f5d19974cea14
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.pd.temp["{#PDID}"])>{$PD_TEMP_CRIT}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] temp high {ITEM.LASTVALUE} (HW)'
+                  priority: HIGH
+                -
+                  uuid: 6dec562cac3b4c8f8c13f2e16d6de701
+                  expression: 'last(/Template LSI JSON LLD ESXI/lsi.pd.temp["{#PDID}"])>{$PD_TEMP_WARNING}'
+                  name: '{HOST.NAME}: LSI controller {#CTLID} physical disk "{#PDID}" [{#EID}] temp warning {ITEM.LASTVALUE} (HW)'
+                  priority: WARNING
+            -
+              uuid: 30e579a814a943d3bc6a7d90dd9e5d4c
+              name: 'Controller "{#CTLID}" physical disk "{#PDID}" ({#EID}) type'
+              type: DEPENDENT
+              key: 'lsi.pd.type["{#PDID}"]'
+              delay: '0'
+              history: '{$PD_HISTORY_PERIOD}'
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[''Controllers''][{#CTLID}][''Response Data''][''Drive {#PDNAME}''][0][''Type'']'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '{$PD_THROTTLING_HB_PERIOD}'
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - |
+                      switch(value)
+                      {
+                      case 'Onln':
+                      value='Online';
+                      break;
+                      case 'UGood':
+                      value='Unconfigured-Good';
+                      break;
+                      case 'UBad':
+                      value='Unconfigured-Bad';
+                      break;
+                      case 'Msng':
+                      value='Missing';
+                      break;
+                      case 'Offln':
+                      value='Offline';
+                      break;
+                      case 'GHS':
+                      value='Global Hot Spare';
+                      break;
+                      case 'DHS':
+                      value='Dedicated Hot Spare';
+                      break;
+                      case 'Rbld':
+                      value='Rebuild';
+                      break;
+                      case 'U':
+                      value='Up';
+                      break;
+                      case 'D':
+                      value='Down/PowerSave';
+                      break;
+                      case 'T':
+                      value='Transition';
+                      break;
+                      case 'F':
+                      value='Foreign';
+                      break;
+                      case 'UGUnsp':
+                      value='Unsupported';
+                      break;
+                      case 'UGShld':
+                      value='UnConfigured shielded';
+                      break;
+                      case 'HSPShld':
+                      value='Hotspare shielded';
+                      break;
+                      case 'CFShld':
+                      value='Configured shielded';
+                      break;
+                      case 'Cpybck':
+                      value='CopyBack';
+                      break;
+                      case 'CBShld':
+                      value='Copyback Shielded';
+                      break;
+                      }
+                      return value
+              master_item:
+                key: 'vfs.file.contents[/tmp/raidstatus_{$ESXIHOST}_pdinfo]'
+              tags:
+                -
+                  tag: Application
+                  value: 'LSI Physical disks'
+          lld_macro_paths:
+            -
+              lld_macro: '{#CTLID}'
+              path: $.CTLID
+            -
+              lld_macro: '{#CTLPDID}'
+              path: $.CTLPDID
+            -
+              lld_macro: '{#EID}'
+              path: '$.[''EID:Slt'']'
+            -
+              lld_macro: '{#PDID}'
+              path: $.PDID
+            -
+              lld_macro: '{#PDNAME}'
+              path: $.PDNAME
+          preprocessing:
+            -
+              type: JAVASCRIPT
+              parameters:
+                - |
+                  var i=0;
+                  var NeedData = [];
+                  var JsonValue = JSON.parse(value);
+                  var Controllers = JsonValue.Controllers;
+                  for (var keyC in Controllers) {
+                  	if (JsonValue.Controllers[keyC]['Response Data'] && JsonValue.Controllers[keyC]['Response Data']['Drive Information']) {
+                  		var DriveInformation = JsonValue.Controllers[keyC]['Response Data']['Drive Information'];
+                  		for (var key in DriveInformation) {       
+                   		 	JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key]['PDID'] = i;
+                   		 	JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key]['PDNAME'] = '/c' + keyC + '/e' + JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key]['EID:Slt'].replace(':','/s');
+                   		 	JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key]['CTLPDID'] = key;
+                   		 	JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key]['CTLID'] = keyC;
+                   		 	NeedData[i] = JsonValue.Controllers[keyC]['Response Data']['Drive Information'][key];
+                   		 	i = i + 1;
+                  		}
+                  	}
+                  }
+                  return JSON.stringify(NeedData)
+            -
+              type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '{$PD_THROTTLING_HB_PERIOD}'
+      macros:
+        -
+          macro: '{$ADAP_CACHE_TEMP_AVERAGE}'
+          value: '45'
+          description: °C
+        -
+          macro: '{$ADAP_CACHE_TEMP_CRIT}'
+          value: '55'
+          description: °C
+        -
+          macro: '{$ADAP_CACHE_TEMP_WARNING}'
+          value: '40'
+          description: °C
+        -
+          macro: '{$ADAP_HISTORY_PERIOD}'
+          value: 180d
+          description: time
+        -
+          macro: '{$ADAP_ROC_TEMP_AVERAGE}'
+          value: '85'
+          description: °C
+        -
+          macro: '{$ADAP_ROC_TEMP_CRIT}'
+          value: '90'
+          description: °C
+        -
+          macro: '{$ADAP_ROC_TEMP_WARNING}'
+          value: '75'
+          description: °C
+        -
+          macro: '{$ADAP_THROTTLING_HB_PERIOD}'
+          value: 3h
+          description: time
+        -
+          macro: '{$ADAP_TREND_PERIOD}'
+          value: 365d
+          description: time
+        -
+          macro: '{$BATTERY_HISTORY_PERIOD}'
+          value: 180d
+          description: time
+        -
+          macro: '{$BATTERY_TREND_PERIOD}'
+          value: 365d
+          description: time
+        -
+          macro: '{$DISCOVERY_PERIOD}'
+          value: 30m
+          description: time
+        -
+          macro: '{$INTERNAL_ITEMS_HISTORY_PERIOD}'
+          value: 30d
+          description: time
+        -
+          macro: '{$LD_HISTORY_PERIOD}'
+          value: 180d
+          description: time
+        -
+          macro: '{$LD_THROTTLING_HB_PERIOD}'
+          value: 3h
+          description: time
+        -
+          macro: '{$PD_HISTORY_PERIOD}'
+          value: 180d
+          description: time
+        -
+          macro: '{$PD_TEMP_AVERAGE}'
+          value: '50'
+          description: °C
+        -
+          macro: '{$PD_TEMP_CRIT}'
+          value: '55'
+          description: °C
+        -
+          macro: '{$PD_TEMP_WARNING}'
+          value: '45'
+          description: °C
+        -
+          macro: '{$PD_THROTTLING_HB_PERIOD}'
+          value: 3h
+          description: time
+        -
+          macro: '{$PD_TREND_PERIOD}'
+          value: 365d
+          description: time
+        -
+          macro: '{$REQUEST_PERIOD}'
+          value: 10m
+          description: time
+    -
+      uuid: 91b8f5d9990f455b8c139fbe26c48cb3
+      template: 'Template LSI RaidMon ESXi hosts discovery'
+      name: 'Template LSI RaidMon ESXi hosts discovery'
+      groups:
+        -
+          name: 'Templates/RAID controllers'
+      discovery_rules:
+        -
+          uuid: 9127635aac5b4569a39328e35b218df1
+          name: 'Discover ESXi hosts'
+          key: 'vfs.dir.get[/tmp,raidstatus_.+_ctlinfo]'
+          delay: '{$HOST_DISCOVERY_PERIOD}'
+          host_prototypes:
+            -
+              uuid: 10ae52b3840544ed820e9521077fc0dc
+              host: 'RaidMon - {#ESXIHOST}'
+              name: 'RaidMon - {#ESXIHOST}'
+              group_links:
+                -
+                  group:
+                    name: 'Type: LSI monitored ESXi hosts'
+              templates:
+                -
+                  name: 'Template LSI JSON LLD ESXI'
+              macros:
+                -
+                  macro: '{$ESXIHOST}'
+                  value: '{#ESXIHOST}'
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - '$.*.basename'
+            -
+              type: STR_REPLACE
+              parameters:
+                - '"raidstatus_'
+                - '{"{#ESXIHOST}":"'
+            -
+              type: STR_REPLACE
+              parameters:
+                - '_ctlinfo"'
+                - '"}'
+      macros:
+        -
+          macro: '{$HOST_DISCOVERY_PERIOD}'
+          value: 30m
+          description: time

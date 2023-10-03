@@ -2,6 +2,7 @@
 ----
 
 **This template is based on template by Oleg Pchelnikov - https://internet-lab.ru/zabbix_lsi_win**
+**Repository address - https://github.com/ghost9777/zabbix_megaraid_esxi**
 
 ----
 You need a Linux VM to collect json files from ESXi hosts. It can be a separate VM or Zabbix server itself but separate one is recommended. Assume VM name is **`raidmon`**. Create a user to let ESXi hosts send json files to **`raidmon`** VM by SCP. Let's name this user **`esxi-raidmon`** for example. 

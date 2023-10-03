@@ -2,6 +2,7 @@
 ----
 
 **This template is based on template by Oleg Pchelnikov - https://internet-lab.ru/zabbix_lsi_win**
+**Repository address - https://github.com/ghost9777/zabbix_megaraid_esxi**
 
 **Repository address - https://github.com/ghost9777/zabbix_megaraid_esxi**
 

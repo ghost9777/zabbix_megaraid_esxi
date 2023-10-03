@@ -8,7 +8,7 @@
 ----
 You need a Linux VM to collect json files from ESXi hosts. It can be a separate VM or Zabbix server itself but separate one is recommended. Assume VM name is **`raidmon`**. Create a user to let ESXi hosts send json files to **`raidmon`** VM by SCP. Let's name this user **`esxi-raidmon`** for example. 
 
-You need to generate SSH key pair for this user by using `ssh-keygen -t ecdsa` or your preffered method. Place public key into *`/home/esxi-raidmon/.ssh/authorized_keys`*. Dont't forget to limit access to this file:
+You need to generate SSH key pair for this user by using `ssh-keygen -t ecdsa` or by your preffered method. Place public key into *`/home/esxi-raidmon/.ssh/authorized_keys`*. Dont't forget to limit access to this file:
 ```
 chown esxi-raidmon:esxi-raidmon /home/esxi-raidmon/.ssh/authorized_keys
 chmod 600 /home/esxi-raidmon/.ssh/authorized_keys
